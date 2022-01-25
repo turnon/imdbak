@@ -2,9 +2,9 @@ require "imdbak/version"
 require "csv"
 
 module Imdbak
-  COMMA = ','
   NULL = "\\N"
   TAB = "\t"
+  COMMA = ","
 
   module Tsv
     def initialize(file_path, take: nil)
