@@ -86,7 +86,22 @@ module Imdbak
     class Title < ActiveRecord::Base
       include Importor
 
-      has_many :principals
+      ACTOR = 'actor'
+      ACTRESS = 'actress'
+      ARCHIVE_FOOTAGE = 'archive_footage'
+      ARCHIVE_SOUND = 'archive_sound'
+      CINEMATOGRAPHER = 'cinematographer'
+      COMPOSER = 'composer'
+      DIRECTOR = 'director'
+      EDITOR = 'editor'
+      PRODUCER = 'producer'
+      PRODUCTION_DESIGNER = 'production_designer'
+      SELF = 'self'
+      WRITER = 'writer'
+
+      NULL = "\\N"
+
+      has_many :principals, -> { where.not(name_id: 0).order(:ordering) }
       has_many :names, through: :principals
 
       class << self
@@ -97,12 +112,78 @@ module Imdbak
           end
         end
       end
+
+      def detail
+        actors = []
+        archive_footages = []
+        archive_sounds = []
+        cinematographers = []
+        composers = []
+        directors = []
+        editors = []
+        producers = []
+        production_designers = []
+        themselves = []
+        writers = []
+
+        principals.each do |p|
+          name = p.name
+          category = p.category
+          case category
+          when ACTOR, ACTRESS
+            actors << {nconst: name.nconst, primary_name: name.primary_name, category: category, characters: p.characters == NULL ? [] : JSON.parse(p.characters)}
+          when SELF
+            themselves << {nconst: name.nconst, primary_name: name.primary_name, characters: p.characters == NULL ? [] : JSON.parse(p.characters)}
+          when WRITER
+            writers << {nconst: name.nconst, primary_name: name.primary_name, job: p.job}
+          when DIRECTOR
+            directors << {nconst: name.nconst, primary_name: name.primary_name, job: p.job}
+          when PRODUCER
+            producers << {nconst: name.nconst, primary_name: name.primary_name, job: p.job}
+          when CINEMATOGRAPHER
+            cinematographers << {nconst: name.nconst, primary_name: name.primary_name, job: p.job}
+          when COMPOSER
+            composers << {nconst: name.nconst, primary_name: name.primary_name, job: p.job}
+          when EDITOR
+            editors << {nconst: name.nconst, primary_name: name.primary_name, job: p.job}
+          when PRODUCTION_DESIGNER
+            production_designers << {nconst: name.nconst, primary_name: name.primary_name, job: p.job}
+          when ARCHIVE_FOOTAGE
+            archive_footages << {nconst: name.nconst, primary_name: name.primary_name, characters: p.characters == NULL ? [] : JSON.parse(p.characters)}
+          when ARCHIVE_SOUND
+            archive_sounds << {nconst: name.nconst, primary_name: name.primary_name, characters: p.characters == NULL ? [] : JSON.parse(p.characters)}
+          end
+        end
+
+        {
+          tconst: tconst,
+          title_type: title_type,
+          primary_title: primary_title,
+          original_title: original_title,
+          is_adult: is_adult ? 1 : 0,
+          start_year: start_year,
+          end_year: end_year,
+          runtime_minutes: runtime_minutes,
+          genres: genres.split(COMMA),
+          actors: actors,
+          themselves: themselves,
+          writers: writers,
+          directors: directors,
+          producers: producers,
+          cinematographers: cinematographers,
+          composers: composers,
+          editors: editors,
+          production_designers: production_designers,
+          archive_footages: archive_footages,
+          archive_sounds: archive_sounds
+        }
+      end
     end
 
     class Name < ActiveRecord::Base
       include Importor
 
-      has_many :principals
+      has_many :principals, -> { where.not(title_id: 0) }
       has_many :titles, through: :principals
 
       class << self
