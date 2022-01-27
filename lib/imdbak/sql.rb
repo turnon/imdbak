@@ -113,7 +113,7 @@ module Imdbak
         end
       end
 
-      def detail
+      def to_json
         actors = []
         archive_footages = []
         archive_sounds = []
@@ -177,6 +177,18 @@ module Imdbak
           archive_footages: archive_footages,
           archive_sounds: archive_sounds
         }
+      end
+
+      def to_ch
+        json = to_json
+        [:actors, :themselves, :writers, :directors, :producers, :cinematographers, :composers, :editors, :production_designers, :archive_footages, :archive_sounds].each do |attr|
+          rows = json.delete(attr)
+          next if rows.empty?
+          rows.first.keys.each do |key|
+            json["#{attr}.#{key}"] = rows.map{ |r| r[key] }
+          end
+        end
+        json
       end
     end
 
