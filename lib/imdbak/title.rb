@@ -39,5 +39,19 @@ module Imdbak
         title_name_map[t].select{ |name| name[3] == ACTOR }
       end
     end
+
+    class Ratings
+      # tconst  averageRating   numVotes
+      include Tsv
+
+      POINT = '.'
+      EMPTY = ''
+
+      def parse(row)
+        row[1] = row[1].sub(POINT, EMPTY).to_i
+        row[2] = row[2].to_i
+        row
+      end
+    end
   end
 end

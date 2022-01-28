@@ -65,6 +65,22 @@ module Imdbak
       end
     end
 
+    class CreateRatings < ActiveRecord::Migration[7.0]
+      def change
+        create_table :ratings, if_not_exists: true do |t|
+          t.integer :title_id
+          t.integer :avg_rating
+          t.integer :num_votes
+        end
+      end
+    end
+
+    class CreateRatingsIndexes < ActiveRecord::Migration[7.0]
+      def change
+        add_index(:ratings, :title_id, if_not_exists: true)
+      end
+    end
+
     module Importor
       extend ActiveSupport::Concern
 
@@ -103,6 +119,7 @@ module Imdbak
 
       has_many :principals, -> { where.not(name_id: 0).order(:ordering) }
       has_many :names, through: :principals
+      has_one :rating
 
       class << self
         def import(file_path)
@@ -164,6 +181,8 @@ module Imdbak
           start_year: start_year,
           end_year: end_year,
           runtime_minutes: runtime_minutes,
+          avg_rating: rating ? rating.avg_rating : 0,
+          num_votes: rating ? rating.num_votes : 0,
           genres: genres.split(COMMA),
           actors: actors,
           themselves: themselves,
@@ -223,6 +242,21 @@ module Imdbak
             records.map do |t|
               {title_id: tconst_ids[t[0]] || 0, ordering: t[1], name_id: nconst_ids[t[2]] || 0, category: t[3], job: t[4], characters: t[5]}
             end
+          end
+        end
+      end
+    end
+
+    class Rating < ActiveRecord::Base
+      include Importor
+
+      belongs_to :title, optional: true
+
+      class << self
+        def import(file_path)
+          _import(Imdbak::Title::Ratings, file_path, individual: false) do |records|
+            tconst_ids = Title.where(tconst: records.map{ |r| r[0] }).pluck(:tconst, :id).to_h
+            records.map { |t| {title_id: tconst_ids[t[0]] || 0, avg_rating: t[1], num_votes: t[2]} }
           end
         end
       end

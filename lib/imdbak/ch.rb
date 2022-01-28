@@ -14,7 +14,7 @@ module Imdbak
       end
 
       def migrate
-        ClickHouse.connection.create_table('verbose_titles', if_not_exists: true, order: 'start_year', engine: 'MergeTree') do |t|
+        ClickHouse.connection.create_table('full_titles', if_not_exists: true, order: 'start_year', engine: 'MergeTree') do |t|
           t.String :tconst
           t.String :title_type
           t.String :primary_title
@@ -23,6 +23,8 @@ module Imdbak
           t.String :start_year
           t.String :end_year
           t.Int16 :runtime_minutes
+          t.UInt8 :avg_rating
+          t.UInt32 :num_votes
           t << 'genres Array(String)'
           t.Nested :actors do |n|
             n.String :nconst
