@@ -25,4 +25,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency "sqlite3", "~> 1.4.2"
   spec.add_dependency "activerecord", "~> 7.0.1"
   spec.add_dependency "click_house", "~> 1.6.0"
+  spec.add_dependency "ruby-kafka", "~> 1.4.0"
 end
